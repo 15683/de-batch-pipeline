@@ -1,0 +1,40 @@
+image: gitpod/workspace-python-3.11
+
+# Включаем поддержку Docker
+tasks:
+  - name: System Setup
+    init: |
+      # Устанавливаем uv (быстрый менеджер пакетов, актуален для 2026)
+      pip install uv
+      # Подготавливаем зависимости (если нужно локально)
+      uv pip install -r requirements.txt --system
+    command: |
+      # При запуске воркспейса сразу поднимаем инфраструктуру
+      docker-compose up -d
+      # Ждем, пока базы поднимутся, и выводим статус
+      echo "Waiting for services..."
+      sleep 10
+      docker-compose ps
+
+# Открываем порты наружу, чтобы ты видел UI Dagster и MinIO
+ports:
+  - port: 3000
+    name: Dagster UI
+    visibility: public
+    onOpen: open-browser
+  - port: 9001
+    name: MinIO Console
+    visibility: public
+  - port: 5432
+    name: Postgres
+    visibility: private # Базу наружу не светим, подключаемся изнутри
+
+# Расширения VSCode, которые установятся сами
+vscode:
+  extensions:
+    - ms-python.python
+    - innoverio.vscode-dbt-power-user
+    - mtxr.sqltools
+    - mtxr.sqltools-driver-pg
+    - tamasfe.even-better-toml
+    - ms-azuretools.vscode-docker
