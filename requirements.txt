@@ -1,0 +1,14 @@
+dagster
+dagster-webserver
+dagster-postgres
+dagster-dbt
+dagster-duckdb
+dbt-duckdb
+duckdb
+polars
+psycopg2-binary
+sqlalchemy
+minio
+s3fs
+pyarrow
+faker
