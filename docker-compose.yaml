@@ -57,7 +57,7 @@ services:
   dagster_webserver:
     build:
       context: .
-      dockerfile: Dockerfile.dagster
+      dockerfile: Dockerfile
     container_name: de_pipeline_dagster_web
     environment:
       DAGSTER_POSTGRES_USER: dagster
@@ -87,7 +87,7 @@ services:
   dagster_daemon:
     build:
       context: .
-      dockerfile: Dockerfile.dagster
+      dockerfile: Dockerfile
     container_name: de_pipeline_dagster_daemon
     command: dagster-daemon run
     environment:
