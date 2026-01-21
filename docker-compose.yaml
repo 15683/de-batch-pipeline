@@ -1,16 +1,15 @@
-# Оптимизированная версия для локальной работы с Finch на ограниченных ресурсах
-
-version: '3.8'  # Совместимая версия для Finch
+version: '3.8'
 
 services:
   postgres:
-    image: postgres:15-alpine  # Alpine легче стандартного образа
+    image: postgres:15-alpine
     container_name: de_pipeline_postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: dagster
-      POSTGRES_PASSWORD: dagster_password
-      POSTGRES_DB: dagster
-      # Оптимизация памяти PostgreSQL
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_INITDB_ARGS: "-c shared_buffers=256MB -c work_mem=8MB"
     deploy:
       resources:
@@ -20,7 +19,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dagster"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,11 +29,12 @@ services:
   minio:
     image: minio/minio:latest
     container_name: de_pipeline_minio
+    env_file:
+      - .env
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-      # Критически важно для снижения потребления памяти!
-      CI_CD: "true"  # Снижает выделение до ~256MB
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      CI_CD: "true"
     command: server /data --console-address ":9001"
     deploy:
       resources:
@@ -57,15 +57,19 @@ services:
   dagster_webserver:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/dagster/Dockerfile
     container_name: de_pipeline_dagster_web
+    env_file:
+      - .env
     environment:
-      DAGSTER_POSTGRES_USER: dagster
-      DAGSTER_POSTGRES_PASSWORD: dagster_password
-      DAGSTER_POSTGRES_DB: dagster
+      DAGSTER_POSTGRES_USER: ${POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
       DAGSTER_POSTGRES_HOSTNAME: postgres
-      # Ограничение памяти для Dagster
       DAGSTER_MEMORY_LIMIT: "1GB"
+      DUCKDB_THREADS: ${DUCKDB_THREADS}
+      DUCKDB_MEMORY_LIMIT: ${DUCKDB_MEMORY_LIMIT}
+      POLARS_MAX_THREADS: ${POLARS_MAX_THREADS}
     deploy:
       resources:
         limits:
@@ -76,6 +80,8 @@ services:
     volumes:
       - ./dagster_home:/opt/dagster/dagster_home
       - ./data:/opt/dagster/app/data
+      - ./orchestration:/opt/dagster/app/orchestration
+      - ./transformation:/opt/dagster/app/transformation
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,14 +93,19 @@ services:
   dagster_daemon:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/dagster/Dockerfile
     container_name: de_pipeline_dagster_daemon
     command: dagster-daemon run
+    env_file:
+      - .env
     environment:
-      DAGSTER_POSTGRES_USER: dagster
-      DAGSTER_POSTGRES_PASSWORD: dagster_password
-      DAGSTER_POSTGRES_DB: dagster
+      DAGSTER_POSTGRES_USER: ${POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
       DAGSTER_POSTGRES_HOSTNAME: postgres
+      DUCKDB_THREADS: ${DUCKDB_THREADS}
+      DUCKDB_MEMORY_LIMIT: ${DUCKDB_MEMORY_LIMIT}
+      POLARS_MAX_THREADS: ${POLARS_MAX_THREADS}
     deploy:
       resources:
         limits:
@@ -103,6 +114,8 @@ services:
     volumes:
       - ./dagster_home:/opt/dagster/dagster_home
       - ./data:/opt/dagster/app/data
+      - ./orchestration:/opt/dagster/app/orchestration
+      - ./transformation:/opt/dagster/app/transformation
     depends_on:
       postgres:
         condition: service_healthy

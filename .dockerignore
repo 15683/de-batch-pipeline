@@ -1,0 +1,22 @@
+.venv/
+.zed/
+.git/
+.gitignore
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Не нужны в образе
+README.md
+LICENSE
+scripts/
+.python-version
