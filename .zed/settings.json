@@ -1,0 +1,36 @@
+{
+  "languages": {
+    "Python": {
+      "language_servers": [
+        "pyright",
+        "ruff"
+      ],
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "ruff",
+          "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"]
+        }
+      },
+      "tab_size": 4
+    }
+  },
+  "lsp": {
+    "pyright": {
+      "settings": {
+        "python": {
+          "pythonPath": ".venv/bin/python",
+          "analysis": {
+            "typeCheckingMode": "basic",
+            "autoSearchPaths": true
+          }
+        }
+      }
+    },
+    "ruff": {
+      "settings": {
+        "path": ".venv/bin/ruff"
+      }
+    }
+  }
+}

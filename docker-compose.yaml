@@ -1,63 +1,119 @@
-version: '3.8'
+# Оптимизированная версия для локальной работы с Finch на ограниченных ресурсах
+
+version: '3.8'  # Совместимая версия для Finch
 
 services:
-  # 1. Database (Source)
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15-alpine  # Alpine легче стандартного образа
+    container_name: de_pipeline_postgres
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: source_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_USER: dagster
+      POSTGRES_PASSWORD: dagster_password
+      POSTGRES_DB: dagster
+      # Оптимизация памяти PostgreSQL
+      POSTGRES_INITDB_ARGS: "-c shared_buffers=256MB -c work_mem=8MB"
     deploy:
       resources:
         limits:
-          memory: 512M  # Жесткий лимит памяти!
+          memory: 800M
+          cpus: '0.5'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dagster"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - de_network
 
-  # 2. Data Lake
   minio:
     image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    container_name: de_pipeline_minio
     environment:
-      MINIO_ROOT_USER: minio_admin
-      MINIO_ROOT_PASSWORD: minio_password
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      # Критически важно для снижения потребления памяти!
+      CI_CD: "true"  # Снижает выделение до ~256MB
+    command: server /data --console-address ":9001"
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+          cpus: '0.3'
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - minio_data:/data
-    deploy:
-      resources:
-        limits:
-          memory: 512M
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    networks:
+      - de_network
 
-  # 3. Main ETL Container (Dagster + dbt + Polars)
-  dagster_libs:
+  dagster_webserver:
     build:
       context: .
-      dockerfile: docker/dagster/Dockerfile
-    container_name: de_project_main
+      dockerfile: Dockerfile.dagster
+    container_name: de_pipeline_dagster_web
     environment:
-      DAGSTER_POSTGRES_USER: user
-      DAGSTER_POSTGRES_PASSWORD: password
-      DAGSTER_POSTGRES_DB: source_db
-      DAGSTER_POSTGRES_HOST: postgres
-    volumes:
-      - .:/workspaces/de-batch-pipeline # Монтируем весь код внутрь
-    depends_on:
-      - postgres
-      - minio
-    command: dagster dev -h 0.0.0.0 -p 3000 -f orchestration/assets/raw_ingest.py # Временная команда заглушка
-    ports:
-      - "3000:3000"
+      DAGSTER_POSTGRES_USER: dagster
+      DAGSTER_POSTGRES_PASSWORD: dagster_password
+      DAGSTER_POSTGRES_DB: dagster
+      DAGSTER_POSTGRES_HOSTNAME: postgres
+      # Ограничение памяти для Dagster
+      DAGSTER_MEMORY_LIMIT: "1GB"
     deploy:
       resources:
         limits:
-          memory: 4G # Основная память тут
+          memory: 1200M
+          cpus: '0.8'
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./dagster_home:/opt/dagster/dagster_home
+      - ./data:/opt/dagster/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - de_network
+
+  dagster_daemon:
+    build:
+      context: .
+      dockerfile: Dockerfile.dagster
+    container_name: de_pipeline_dagster_daemon
+    command: dagster-daemon run
+    environment:
+      DAGSTER_POSTGRES_USER: dagster
+      DAGSTER_POSTGRES_PASSWORD: dagster_password
+      DAGSTER_POSTGRES_DB: dagster
+      DAGSTER_POSTGRES_HOSTNAME: postgres
+    deploy:
+      resources:
+        limits:
+          memory: 800M
+          cpus: '0.5'
+    volumes:
+      - ./dagster_home:/opt/dagster/dagster_home
+      - ./data:/opt/dagster/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - de_network
 
 volumes:
   postgres_data:
   minio_data:
+
+networks:
+  de_network:
+    driver: bridge

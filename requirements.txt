@@ -1,14 +1,24 @@
-dagster
-dagster-webserver
-dagster-postgres
-dagster-dbt
-dagster-duckdb
-dbt-duckdb
-duckdb
-polars
-psycopg2-binary
-sqlalchemy
-minio
-s3fs
-pyarrow
-faker
+# Зависимости для разработки (не входят в Docker контейнер)
+
+# Language servers для Zed
+pyright>=1.1.408
+ruff>=0.3.0
+
+# Основные зависимости проекта
+dagster>=1.6.0
+dagster-postgres>=0.22.0
+dagster-duckdb>=0.22.0
+dagit>=1.6.0
+dbt-core>=1.7.0
+dbt-duckdb>=1.7.0
+polars>=0.20.0
+duckdb>=0.10.0
+boto3>=1.34.0  # Для работы с MinIO
+
+# Инструменты разработки
+pytest>=8.0.0
+pytest-cov>=4.1.0
+black>=24.0.0
+isort>=5.13.0
+mypy>=1.8.0
+ipython>=8.20.0

@@ -1,25 +1,33 @@
+# Dockerfile с поддержкой uv
 FROM python:3.11-slim
 
-# Установка системных зависимостей (git нужен для dbt)
-RUN apt-get update && apt-get install -y \
-    git \
-    libpq-dev \
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Установка uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Настройка рабочей директории
 WORKDIR /opt/dagster/app
 
-# Копируем файл зависимостей
+# Копируем файлы зависимостей
 COPY requirements.txt .
 
-# Устанавливаем Python пакеты (используем кэш для ускорения)
-RUN pip install --no-cache-dir -r requirements.txt
+# Установка зависимостей БЕЗ виртуального окружения (флаг --system)
+# В Docker контейнере виртуальное окружение не нужно!
+RUN uv pip install --system --no-cache -r requirements.txt
 
-# Настройка переменных окружения для Dagster
+# Копируем код приложения
+COPY . .
+
+# Настройка Dagster
 ENV DAGSTER_HOME=/opt/dagster/dagster_home
 RUN mkdir -p $DAGSTER_HOME
 
-# Копируем конфиг дагстера (создадим его позже)
-COPY orchestration/dagster.yaml $DAGSTER_HOME/
+EXPOSE 3000
 
-WORKDIR /workspaces/de-batch-pipeline
+CMD ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000"]
