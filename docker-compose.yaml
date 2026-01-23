@@ -1,3 +1,61 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: de_pipeline_postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    command: >
+        postgres
+        -c shared_buffers=256MB
+        -c work_mem=8MB
+    deploy:
+      resources:
+        limits:
+          memory: 800M
+          cpus: '0.5'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - de_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: de_pipeline_minio
+    env_file:
+      - .env
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+          cpus: '0.3'
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    networks:
+      - de_network
+
   dagster_webserver:
     build:
       context: .
@@ -41,3 +99,46 @@
       interval: 30s
       timeout: 10s
       retries: 3
+
+  dagster_daemon:
+    build:
+      context: .
+      dockerfile: docker/dagster/Dockerfile
+    container_name: de_pipeline_dagster_daemon
+    command: dagster-daemon run
+    env_file:
+      - .env
+    environment:
+      DAGSTER_POSTGRES_USER: ${POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
+      DAGSTER_POSTGRES_HOSTNAME: postgres
+      DUCKDB_THREADS: ${DUCKDB_THREADS}
+      DUCKDB_MEMORY_LIMIT: ${DUCKDB_MEMORY_LIMIT}
+      POLARS_MAX_THREADS: ${POLARS_MAX_THREADS}
+      DAGSTER_MODULE_NAME: main
+    deploy:
+      resources:
+        limits:
+          memory: 800M
+          cpus: '0.5'
+    volumes:
+      - ./dagster_home:/opt/dagster/dagster_home
+      - ./data:/opt/dagster/app/data
+      - ./orchestration:/opt/dagster/app/orchestration
+      - ./transformation:/opt/dagster/app/transformation
+      - ./main.py:/opt/dagster/app/main.py
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - de_network
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  de_network:
+    driver: bridge

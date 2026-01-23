@@ -1,5 +1,4 @@
 #!/bin/bash
-
 echo "🔍 Проверка состояния сервисов..."
 
 # Проверка PostgreSQL
@@ -26,6 +25,3 @@ else
     echo "❌ Не доступен"
     echo "Проверьте логи: finch logs de_pipeline_dagster_web"
 fi
-
-echo ""
-echo "Все логи: ./scripts/logs.sh"
