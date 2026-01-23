@@ -3,18 +3,22 @@ run_launcher:
   class: DefaultRunLauncher
   config:
     env_vars:
-      - DUCKDB_THREADS=2
-      - POLARS_MAX_THREADS=2
+      - DUCKDB_THREADS
+      - POLARS_MAX_THREADS
 
 run_storage:
   module: dagster_postgres.run_storage
   class: PostgresRunStorage
   config:
     postgres_db:
-      username: dagster
-      password: dagster_password
-      hostname: postgres
-      db_name: dagster
+      username:
+        env: DAGSTER_POSTGRES_USER
+      password:
+        env: DAGSTER_POSTGRES_PASSWORD
+      hostname:
+        env: DAGSTER_POSTGRES_HOSTNAME
+      db_name:
+        env: DAGSTER_POSTGRES_DB
       port: 5432
 
 schedule_storage:
@@ -22,10 +26,14 @@ schedule_storage:
   class: PostgresScheduleStorage
   config:
     postgres_db:
-      username: dagster
-      password: dagster_password
-      hostname: postgres
-      db_name: dagster
+      username:
+        env: DAGSTER_POSTGRES_USER
+      password:
+        env: DAGSTER_POSTGRES_PASSWORD
+      hostname:
+        env: DAGSTER_POSTGRES_HOSTNAME
+      db_name:
+        env: DAGSTER_POSTGRES_DB
       port: 5432
 
 event_log_storage:
@@ -33,8 +41,12 @@ event_log_storage:
   class: PostgresEventLogStorage
   config:
     postgres_db:
-      username: dagster
-      password: dagster_password
-      hostname: postgres
-      db_name: dagster
+      username:
+        env: DAGSTER_POSTGRES_USER
+      password:
+        env: DAGSTER_POSTGRES_PASSWORD
+      hostname:
+        env: DAGSTER_POSTGRES_HOSTNAME
+      db_name:
+        env: DAGSTER_POSTGRES_DB
       port: 5432

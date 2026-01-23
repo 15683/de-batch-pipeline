@@ -26,8 +26,14 @@ COPY . .
 
 # Настройка Dagster
 ENV DAGSTER_HOME=/opt/dagster/dagster_home
+ENV PYTHONPATH=/opt/dagster/app
+ENV DAGSTER_MODULE_NAME=main
+
 RUN mkdir -p $DAGSTER_HOME
+
+# Копируем dagster.yaml в DAGSTER_HOME
+COPY dagster_home/dagster.yaml $DAGSTER_HOME/
 
 EXPOSE 3000
 
-CMD ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000"]
+CMD ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000", "-m", "main"]
