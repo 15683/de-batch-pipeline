@@ -2,18 +2,37 @@
 
 Batch data engineering pipeline using Dagster, DuckDB, dbt, and Polars.
 
+# Olist E-commerce Data Pipeline Guide
+
+## Architecture
+
+```
+CSV Files (Raw Data)
+    ↓
+PostgreSQL (Staging)
+    ↓
+Polars (Data Cleaning)
+    ↓
+MinIO (Parquet Storage)
+    ↓
+DuckDB (Analytics Warehouse)
+    ↓
+dbt (Transformations)
+    ↓
+Dagster (Orchestration & Monitoring)
+
 ## Tech Stack
 
 - **Orchestration**: Dagster
 - **Data Processing**: DuckDB, Polars
 - **Transformation**: dbt
 - **Storage**: PostgreSQL (metadata), MinIO (object storage)
-- **Containerization**: Finch/Docker
+- **Containerization**: Docker
 
 ## Prerequisites
 
 - Python 3.11+
-- Finch or Docker
+- Docker
 - 8GB+ RAM recommended
 
 ## Local Development Setup

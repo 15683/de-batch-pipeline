@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: Fact table with order-level metrics
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Customer who placed the order
+      - name: order_status
+        description: Current order status
+      - name: total_items
+        description: Total number of items in order
+      - name: total_amount
+        description: Total order amount
+      - name: total_freight
+        description: Total freight cost
+      - name: order_purchase_date
+        description: Date of purchase
+
+  - name: dim_customers
+    description: Customer dimension table
+    columns:
+      - name: customer_id
+        description: Unique customer identifier
+        tests:
+          - unique
+          - not_null
+      - name: customer_city
+        description: Customer city
+      - name: customer_state
+        description: Customer state
+      - name: total_orders
+        description: Total number of orders by customer
+      - name: total_spent
+        description: Total amount spent by customer

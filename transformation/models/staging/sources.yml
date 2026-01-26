@@ -1,0 +1,25 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw data loaded from CSV files
+    database: warehouse
+    schema: raw
+    tables:
+      - name: olist_customers_dataset
+        description: Raw customer data
+        columns:
+          - name: customer_id
+            description: Primary key
+
+      - name: olist_orders_dataset
+        description: Raw orders data
+        columns:
+          - name: order_id
+            description: Primary key
+
+      - name: olist_order_items_dataset
+        description: Raw order items data
+        columns:
+          - name: order_id
+            description: Foreign key to orders

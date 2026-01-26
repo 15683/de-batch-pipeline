@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: Staging table for customers data
+    columns:
+      - name: customer_id
+        description: Unique customer identifier
+        tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        description: Unique customer ID across all orders
+      - name: customer_zip_code_prefix
+        description: First 5 digits of customer zip code
+      - name: customer_city
+        description: Customer city name
+      - name: customer_state
+        description: Customer state abbreviation
+
+  - name: stg_orders
+    description: Staging table for orders data
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Foreign key to customers
+        tests:
+          - not_null
+      - name: order_status
+        description: Order status (delivered, shipped, etc.)
+      - name: order_purchase_timestamp
+        description: Timestamp of purchase
+
+  - name: stg_order_items
+    description: Staging table for order items data
+    columns:
+      - name: order_id
+        description: Foreign key to orders
+        tests:
+          - not_null
+      - name: order_item_id
+        description: Sequential item number within order
+      - name: product_id
+        description: Product identifier
+      - name: price
+        description: Item price
+      - name: freight_value
+        description: Freight value for this item

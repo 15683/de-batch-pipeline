@@ -212,3 +212,16 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .zed/
+
+# Data
+data/warehouse.duckdb*
+data/*.parquet
+
+# dbt
+transformation/target/
+transformation/dbt_packages/
+transformation/logs/
+
+# Dagster
+dagster_home/history/
+dagster_home/storage/

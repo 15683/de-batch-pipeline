@@ -1,0 +1,14 @@
+olist_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /opt/dagster/app/data/warehouse.duckdb
+      schema: main
+      threads: 2
+      extensions:
+        - parquet
+        - httpfs
+    prod:
+      type: duckdb
+      path: /opt/dagster/app/data/warehouse_prod.duckdb
