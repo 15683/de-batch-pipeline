@@ -8,45 +8,9 @@
 
 > Production-grade batch data engineering pipeline for processing Brazilian e-commerce data using modern data stack
 
-## 📖 Table of Contents
-
-- [Overview](#-overview)
-- [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
-- [Quick Start](#-quick-start)
-- [Project Structure](#-project-structure)
-- [Data Flow](#-data-flow)
-- [Usage](#-usage)
-- [Monitoring](#
--monitoring)
-- [Troubleshooting](#-troubleshooting)
-- [Development](#-development)
-- [Contributing](#-contributing)
-- [License](#-license)
-
 ## 🎯 Overview
 
 This project implements a **Medallion Architecture** (Bronze → Silver → Gold) data pipeline for processing e-commerce transaction data from [Olist Brazilian E-Commerce Dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce). 
-
-### Key Features
-
-✨ **Modern Data Stack**
-- Orchestrated by Dagster with full lineage tracking
-- Columnar storage with Parquet in MinIO
-- High-performance analytics with DuckDB
-- SQL transformations managed by dbt
-
-🔄 **Production Ready**
-- Containerized with Docker/Finch
-- Idempotent data processing
-- Comprehensive error handling
-- Built-in data quality checks
-
-📊 **Analytics Focused**
-- Pre-built analytical marts
-- Customer segmentation
-- Sales analytics
-- Ready for BI tools integration
 
 ## 🏗️ Architecture
 
@@ -86,22 +50,6 @@ This project implements a **Medallion Architecture** (Bronze → Silver → Gold
 │  │  • top_customers                     │                  │
 │  └──────────────────────────────────────┘                  │
 └─────────────────────────────────────────────────────────────┘
-                         │
-                         ↓
-                   📊 BI Tools
-           (Tableau, PowerBI, Metabase)
-```
-
-### Orchestration Layer
-
-```
-┌────────────────────────────────────────────────────────┐
-│                    Dagster                             │
-│  • Asset Dependency Management                         │
-│  • Data Lineage Tracking                               │
-│  • Schedule & Sensor Triggers                          │
-│  • Run History & Logs                                  │
-└────────────────────────────────────────────────────────┘
 ```
 
 ## 🛠️ Tech Stack
@@ -114,16 +62,16 @@ This project implements a **Medallion Architecture** (Bronze → Silver → Gold
 | **Transformation** | [dbt 1.7+](https://www.getdbt.com/) | SQL-based data transformations |
 | **Object Storage** | [MinIO](https://min.io/) | S3-compatible object storage |
 | **Staging DB** | [PostgreSQL 15](https://www.postgresql.org/) | Relational database for raw data |
-| **Containerization** | [Docker](https://www.docker.com/) / [Finch](https://github.com/runfinch/finch) | Container orchestration |
+| **Containerization** | [Docker](https://www.docker.com/) | Container orchestration |
 | **File Format** | [Apache Parquet](https://parquet.apache.org/) | Columnar storage format |
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- **Docker** or **Finch** (for macOS)
-- **Python 3.11+** (for local development)
-- **8GB+ RAM** recommended
+- **Docker**
+- **Python 3.11+**
+- **8GB+ RAM**
 - **Git**
 
 ### Installation
@@ -167,9 +115,6 @@ Place your CSV files in `data/seeds/`:
 4️⃣ **Start the pipeline**
 
 ```bash
-# Using Finch (macOS)
-finch compose up -d --build
-
 # Using Docker
 docker compose up -d --build
 ```
@@ -292,17 +237,17 @@ raw_order_items_to_postgres ───┤                                │    r
 **Via CLI:**
 ```bash
 # Materialize all assets
-finch exec de_pipeline_dagster_web dagster asset materialize --select "*"
+docker exec de_pipeline_dagster_web dagster asset materialize --select "*"
 
 # Materialize specific asset group
-finch exec de_pipeline_dagster_web dagster asset materialize --select "tag:group=ingestion"
+docker exec de_pipeline_dagster_web dagster asset materialize --select "tag:group=ingestion"
 ```
 
 ### Querying Analytics
 
 **Connect to DuckDB:**
 ```bash
-finch exec -it de_pipeline_dagster_web python
+docker exec -it de_pipeline_dagster_web python
 ```
 
 ```python
@@ -333,52 +278,13 @@ conn.execute("""
 
 **PostgreSQL:**
 ```bash
-finch exec -it de_pipeline_postgres psql -U dagster -d postgres
+docker exec -it de_pipeline_postgres psql -U dagster -d postgres
 
 # List tables
 \dt
 
 # Query data
 SELECT COUNT(*) FROM olist_orders_dataset;
-```
-
-## 📊 Monitoring
-
-### Dagster UI Features
-
-- **Asset Catalog**: View all assets and their metadata
-- **Lineage Graph**: Visualize data dependencies
-- **Run History**: Track all pipeline executions
-- **Logs**: Detailed execution logs for debugging
-- **Asset Checks**: Data quality validation results
-
-### Health Checks
-
-```bash
-# Check all services
-finch ps
-
-# PostgreSQL
-finch exec de_pipeline_postgres pg_isready -U dagster
-
-# MinIO
-curl http://localhost:9000/minio/health/live
-
-# Dagster
-curl http://localhost:3000/server_info
-```
-
-### Logs
-
-```bash
-# Dagster webserver logs
-finch logs de_pipeline_dagster_web -f
-
-# Dagster daemon logs
-finch logs de_pipeline_dagster_daemon -f
-
-# All services
-finch compose logs -f
 ```
 
 ## 🔧 Troubleshooting
@@ -388,13 +294,13 @@ finch compose logs -f
 **Solution:**
 ```bash
 # Check Dagster logs
-finch logs de_pipeline_dagster_web --tail 100
+docker logs de_pipeline_dagster_web --tail 100
 
 # Reload definitions
 # In Dagster UI: Click "Reload definitions"
 
 # Restart Dagster
-finch restart de_pipeline_dagster_web de_pipeline_dagster_daemon
+docker restart de_pipeline_dagster_web de_pipeline_dagster_daemon
 ```
 
 ### Issue: PostgreSQL connection errors
@@ -402,13 +308,13 @@ finch restart de_pipeline_dagster_web de_pipeline_dagster_daemon
 **Solution:**
 ```bash
 # Verify PostgreSQL is healthy
-finch exec de_pipeline_postgres pg_isready -U dagster
+docker exec de_pipeline_postgres pg_isready -U dagster
 
 # Check logs
-finch logs de_pipeline_postgres
+docker logs de_pipeline_postgres
 
 # Restart if needed
-finch restart de_pipeline_postgres
+docker restart de_pipeline_postgres
 ```
 
 ### Issue: DuckDB file locked
@@ -416,13 +322,13 @@ finch restart de_pipeline_postgres
 **Solution:**
 ```bash
 # Stop all containers
-finch compose down
+docker compose down
 
 # Remove DuckDB file
 rm data/warehouse.duckdb*
 
 # Restart
-finch compose up -d
+docker compose up -d
 ```
 
 ### Issue: Port already in use
@@ -442,7 +348,7 @@ lsof -i :3000
 ```bash
 # Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
@@ -462,7 +368,7 @@ pytest
 
 ```bash
 # Enter Dagster container
-finch exec -it de_pipeline_dagster_web bash
+docker exec -it de_pipeline_dagster_web bash
 
 # Run specific dbt model
 cd transformation
@@ -474,26 +380,8 @@ dbt test
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+The project was created for educational purposes and inspired by modern data engineering best practices. Contributions are welcome!
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Dataset: [Olist Brazilian E-Commerce](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
-- Inspired by modern data engineering best practices
-- Built with love for the data community ❤️
-
----
-
-**Made with ❤️ by the Data Engineering Community**
-
-For questions or issues, please open an issue on GitHub.
+[LICENSE](LICENSE)
