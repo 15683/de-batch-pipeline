@@ -1,11 +1,5 @@
 # 🚀 Olist E-commerce Data Pipeline
 
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Dagster](https://img.shields.io/badge/Dagster-1.6+-orange.svg)](https://dagster.io/)
-[![DuckDB](https://img.shields.io/badge/DuckDB-0.10+-yellow.svg)](https://duckdb.org/)
-[![dbt](https://img.shields.io/badge/dbt-1.7+-red.svg)](https://www.getdbt.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
 > Production-grade batch data engineering pipeline for processing Brazilian e-commerce data using modern data stack
 
 ## 🎯 Overview
@@ -23,32 +17,32 @@ This project implements a **Medallion Architecture** (Bronze → Silver → Gold
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                 Bronze Layer (Raw Data)                     │
-│  ┌──────────────┐         ┌────────────────┐              │
-│  │  PostgreSQL  │────────→│  MinIO/S3      │              │
-│  │  (Staging)   │         │  (Parquet)     │              │
-│  └──────────────┘         └────────────────┘              │
+│  ┌──────────────┐         ┌────────────────┐                │
+│  │  PostgreSQL  │────────→│  MinIO/S3      │                │
+│  │  (Staging)   │         │  (Parquet)     │                │
+│  └──────────────┘         └────────────────┘                │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │              Silver Layer (Cleaned Data)                    │
-│  ┌──────────────────────────────────────┐                  │
-│  │         DuckDB Warehouse             │                  │
-│  │  • raw schema (loaded from Parquet)  │                  │
-│  │  • staging schema (dbt views)        │                  │
-│  └──────────────────────────────────────┘                  │
+│  ┌──────────────────────────────────────┐                   │
+│  │         DuckDB Warehouse             │                   │
+│  │  • raw schema (loaded from Parquet)  │                   │
+│  │  • staging schema (dbt views)        │                   │
+│  └──────────────────────────────────────┘                   │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │             Gold Layer (Analytics)                          │
-│  ┌──────────────────────────────────────┐                  │
-│  │       DuckDB Analytics Marts         │                  │
-│  │  • fct_orders (fact table)           │                  │
-│  │  • dim_customers (dimension)         │                  │
-│  │  • daily_sales_summary               │                  │
-│  │  • top_customers                     │                  │
-│  └──────────────────────────────────────┘                  │
+│  ┌──────────────────────────────────────┐                   │
+│  │       DuckDB Analytics Marts         │                   │
+│  │  • fct_orders (fact table)           │                   │
+│  │  • dim_customers (dimension)         │                   │
+│  │  • daily_sales_summary               │                   │
+│  │  • top_customers                     │                   │
+│  └──────────────────────────────────────┘                   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -56,23 +50,16 @@ This project implements a **Medallion Architecture** (Bronze → Silver → Gold
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
-| **Orchestration** | [Dagster 1.6+](https://dagster.io/) | Workflow orchestration and monitoring |
-| **Data Processing** | [Polars 0.20+](https://www.pola.rs/) | Fast DataFrame operations |
-| **Analytics DB** | [DuckDB 0.10+](https://duckdb.org/) | OLAP database for analytics |
-| **Transformation** | [dbt 1.7+](https://www.getdbt.com/) | SQL-based data transformations |
-| **Object Storage** | [MinIO](https://min.io/) | S3-compatible object storage |
-| **Staging DB** | [PostgreSQL 15](https://www.postgresql.org/) | Relational database for raw data |
-| **Containerization** | [Docker](https://www.docker.com/) | Container orchestration |
-| **File Format** | [Apache Parquet](https://parquet.apache.org/) | Columnar storage format |
+| **Orchestration** | Dagster | Workflow orchestration and monitoring |
+| **Data Processing** | Polars | Fast DataFrame operations |
+| **Analytics DB** | DuckDB | OLAP database for analytics |
+| **Transformation** | dbt | SQL-based data transformations |
+| **Object Storage** | MinIO | S3-compatible object storage |
+| **Staging DB** | PostgreSQL | Relational database for raw data |
+| **Containerization** | Docker | Container orchestration |
+| **File Format** | Apache Parquet | Columnar storage format |
 
 ## 🚀 Quick Start
-
-### Prerequisites
-
-- **Docker**
-- **Python 3.11+**
-- **8GB+ RAM**
-- **Git**
 
 ### Installation
 
@@ -192,7 +179,7 @@ Assets: raw_customers_to_postgres, raw_orders_to_postgres, raw_order_items_to_po
 Assets: export_customers_to_minio, export_orders_to_minio, export_order_items_to_minio
 ```
 - Extracts data from PostgreSQL
-- Converts to Parquet format (10-100x compression)
+- Converts to Parquet format
 - Stores in MinIO S3-compatible storage
 
 #### 3️⃣ **Warehouse Load** (MinIO → DuckDB)
@@ -233,15 +220,6 @@ raw_order_items_to_postgres ───┤                                │    r
 2. Navigate to **Assets** → **View all assets**
 3. Click **Materialize all**
 4. Monitor progress in real-time
-
-**Via CLI:**
-```bash
-# Materialize all assets
-docker exec de_pipeline_dagster_web dagster asset materialize --select "*"
-
-# Materialize specific asset group
-docker exec de_pipeline_dagster_web dagster asset materialize --select "tag:group=ingestion"
-```
 
 ### Querying Analytics
 
@@ -287,60 +265,6 @@ docker exec -it de_pipeline_postgres psql -U dagster -d postgres
 SELECT COUNT(*) FROM olist_orders_dataset;
 ```
 
-## 🔧 Troubleshooting
-
-### Issue: Assets won't materialize
-
-**Solution:**
-```bash
-# Check Dagster logs
-docker logs de_pipeline_dagster_web --tail 100
-
-# Reload definitions
-# In Dagster UI: Click "Reload definitions"
-
-# Restart Dagster
-docker restart de_pipeline_dagster_web de_pipeline_dagster_daemon
-```
-
-### Issue: PostgreSQL connection errors
-
-**Solution:**
-```bash
-# Verify PostgreSQL is healthy
-docker exec de_pipeline_postgres pg_isready -U dagster
-
-# Check logs
-docker logs de_pipeline_postgres
-
-# Restart if needed
-docker restart de_pipeline_postgres
-```
-
-### Issue: DuckDB file locked
-
-**Solution:**
-```bash
-# Stop all containers
-docker compose down
-
-# Remove DuckDB file
-rm data/warehouse.duckdb*
-
-# Restart
-docker compose up -d
-```
-
-### Issue: Port already in use
-
-**Solution:**
-```bash
-# Check what's using port 3000
-lsof -i :3000
-
-# Stop the process or change port in docker-compose.yaml
-```
-
 ## 👨‍💻 Development
 
 ### Local Setup
@@ -352,9 +276,6 @@ source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Run tests (if available)
-pytest
 ```
 
 ### Adding New Assets
@@ -373,14 +294,11 @@ docker exec -it de_pipeline_dagster_web bash
 # Run specific dbt model
 cd transformation
 dbt run --select model_name
-
-# Run tests
-dbt test
 ```
 
 ## 🤝 Contributing
 
-The project was created for educational purposes and inspired by modern data engineering best practices. Contributions are welcome!
+The project was created for educational purposes and inspired by modern data stack best practices. Contributions are welcome!
 
 ## 📄 License
 
