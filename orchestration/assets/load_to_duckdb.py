@@ -1,4 +1,3 @@
-from pathlib import Path
 
 import duckdb
 from dagster import AssetExecutionContext, AssetIn, asset
