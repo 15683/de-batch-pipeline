@@ -1,6 +1,6 @@
 # 🚀 Olist E-commerce Data Pipeline
 
-> Production-grade batch data engineering pipeline for processing Brazilian e-commerce data using modern data stack
+> Simple educational DE pipeline for processing Brazilian e-commerce data using modern data stack 
 
 ## 🎯 Overview
 
